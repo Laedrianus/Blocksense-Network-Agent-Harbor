@@ -1,0 +1,19 @@
+{
+  "name": "agent-harbor-wizard-server",
+  "version": "1.0.0",
+  "description": "Backend for Agent Harbor Wizard",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.2",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "tar-fs": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=20 <21"
+  }
+}
