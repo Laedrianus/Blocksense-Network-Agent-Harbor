@@ -1,4 +1,4 @@
-# Agent Harbor Wizard 🚀
+# Agent Harbor Wizard 
 
 A modern, web-based user interface for **Agent Harbor** - making AI-powered coding agents accessible to everyone through an intuitive setup wizard.
 
