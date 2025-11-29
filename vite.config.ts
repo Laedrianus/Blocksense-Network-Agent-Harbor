@@ -14,7 +14,7 @@ export default defineConfig({
     },
     watch: {
       // Prevent Vite from restarting when files are added to the cloned repo directory
-      ignored: ['**/server/agent-harbor-temp/**'],
+      ignored: ['**/agent-harbor-temp/**'],
     }
   }
 })

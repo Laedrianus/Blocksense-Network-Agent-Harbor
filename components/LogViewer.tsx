@@ -18,26 +18,28 @@ const LogViewer: React.FC<LogViewerProps> = ({ logs, title }) => {
     const getLogColor = (type: LogEntry['type']) => {
         switch (type) {
             case 'success':
-                return 'text-green-400';
+                return 'text-green-700';
             case 'error':
-                return 'text-red-400';
+                return 'text-red-700';
+            case 'warning':
+                return 'text-orange-700';
             case 'info':
             default:
-                return 'text-slate-300';
+                return 'text-slate-800';
         }
     };
 
     return (
         <div className="mt-6">
-            <h3 className="text-base font-semibold text-slate-200 mb-2">{title}</h3>
+            <h3 className="text-base font-semibold text-slate-800 mb-2">{title}</h3>
             <div
                 ref={logContainerRef}
-                className="w-full h-40 bg-black bg-opacity-40 rounded-lg p-3 font-mono text-xs border border-slate-600 overflow-y-auto"
+                className="w-full h-40 bg-white rounded-lg p-3 font-mono text-xs border border-slate-300 overflow-y-auto"
             >
                 {logs.length === 0 && <p className="text-slate-500 text-xs">Awaiting output...</p>}
-                {logs.map((log) => (
-                    <div key={log.id} className="flex gap-2">
-                        <span className="text-slate-500">{log.timestamp}</span>
+                {logs.map((log, index) => (
+                    <div key={`${log.id}-${index}`} className="flex gap-2">
+                        <span className="text-slate-600">{log.timestamp}</span>
                         <span className={`${getLogColor(log.type)} flex-1`}>{log.message}</span>
                     </div>
                 ))}

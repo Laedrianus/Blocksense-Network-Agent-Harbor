@@ -6,10 +6,14 @@ import SelectAgentStep from './components/SelectAgentStep';
 import SetupStep from './components/SetupStep';
 import ApiKeyStep from './components/ApiKeyStep';
 import CreateTaskStep from './components/CreateTaskStep';
+import TimelineStep from './components/TimelineStep';
+import ParallelTasksStep from './components/ParallelTasksStep';
+import TaskDashboardStep from './components/TaskDashboardStep';
 import SummaryStep from './components/SummaryStep';
 import StepIndicator from './components/StepIndicator';
 import LeftInfoPanel from './components/LeftInfoPanel';
 import RightInfoPanel from './components/RightInfoPanel';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App: React.FC = () => {
     const [currentStep, setCurrentStep] = useState<Step>(Step.SystemCheck);
@@ -33,9 +37,10 @@ const App: React.FC = () => {
         pushToRemote: false,
     };
     const [taskDetails, setTaskDetails] = useState<TaskDetails>(initialTaskDetails);
-    
+
     const [apiKey, setApiKey] = useState<string>('');
     const [lastTaskFile, setLastTaskFile] = useState<TaskFile | null>(null);
+    const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         const socket = io(); // Connect to the server via the proxy
@@ -44,6 +49,13 @@ const App: React.FC = () => {
         socket.on('connect', () => {
             console.log('Connected to server');
             setIsConnected(true);
+            socket.emit('config:get');
+        });
+
+        socket.on('config:data', (config: any) => {
+            if (config.apiKey) {
+                setApiKey(config.apiKey);
+            }
         });
 
         socket.on('disconnect', () => {
@@ -107,15 +119,15 @@ const App: React.FC = () => {
                 </div>
             )
         }
-        
+
         switch (currentStep) {
             case Step.SystemCheck:
-                return <SystemCheckStep 
-                          status={systemStatus} 
-                          setStatus={setSystemStatus} 
-                          onComplete={goToNextStep} 
-                          socket={socketRef.current!}
-                        />;
+                return <SystemCheckStep
+                    status={systemStatus}
+                    setStatus={setSystemStatus}
+                    onComplete={goToNextStep}
+                    socket={socketRef.current!}
+                />;
             case Step.SelectAgent:
                 return <SelectAgentStep onSelect={handleSelectAgent} onBack={goToPreviousStep} socket={socketRef.current!} selectedAgent={selectedAgent} />;
             case Step.Setup:
@@ -123,7 +135,39 @@ const App: React.FC = () => {
             case Step.ApiKey:
                 return <ApiKeyStep apiKey={apiKey} setApiKey={setApiKey} onComplete={goToNextStep} onBack={goToPreviousStep} selectedAgent={selectedAgent} />;
             case Step.CreateTask:
-                return <CreateTaskStep details={taskDetails} setDetails={setTaskDetails} onComplete={goToNextStep} onBack={goToPreviousStep} socket={socketRef.current!} selectedAgent={selectedAgent} setLastTaskFile={setLastTaskFile} />;
+                return <CreateTaskStep
+                    details={taskDetails}
+                    setDetails={setTaskDetails}
+                    onComplete={(taskId) => {
+                        if (taskId) setCurrentTaskId(taskId);
+                        goToNextStep();
+                    }}
+                    onBack={goToPreviousStep}
+                    socket={socketRef.current!}
+                    selectedAgent={selectedAgent}
+                    setLastTaskFile={setLastTaskFile}
+                />;
+            case Step.Timeline:
+                return <TimelineStep
+                    socket={socketRef.current!}
+                    onBack={goToPreviousStep}
+                    onNext={goToNextStep}
+                />;
+            case Step.ParallelTasks:
+                return <ParallelTasksStep
+                    socket={socketRef.current!}
+                    onBack={goToPreviousStep}
+                    onNext={goToNextStep}
+                    selectedAgent={selectedAgent}
+                />;
+            case Step.TaskMonitor:
+                return <TaskDashboardStep
+                    socket={socketRef.current!}
+                    onBack={goToPreviousStep}
+                    onComplete={goToNextStep}
+                    initialTaskId={currentTaskId || undefined}
+                    onCreateNewTask={() => setCurrentStep(Step.CreateTask)}
+                />;
             case Step.Summary:
                 return <SummaryStep onReset={resetWizard} onBack={goToPreviousStep} selectedAgent={selectedAgent} lastTaskFile={lastTaskFile} branchName={taskDetails.branchName} />;
             default:
@@ -138,9 +182,9 @@ const App: React.FC = () => {
                     <div className="text-center">
                         {/* Logo and Title Section */}
                         <div className="flex items-center justify-center gap-3 mb-4">
-                            <img 
+                            <img
                                 src="/agentlogo.svg"
-                                alt="Agent Harbor Logo" 
+                                alt="Agent Harbor Logo"
                                 className="h-10 w-10"
                             />
                             <div className="text-left">
@@ -152,7 +196,7 @@ const App: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-                        
+
                         {/* Step Indicator */}
                         <StepIndicator currentStep={currentStep} selectedAgent={selectedAgent} />
                     </div>
@@ -161,16 +205,18 @@ const App: React.FC = () => {
 
             <main className="flex-grow flex overflow-hidden">
                 <div className="w-full max-w-8xl mx-auto flex py-8 px-4 sm:px-6 lg:px-8 gap-8">
-                    
+
                     {/* Left Info Panel */}
-                     <aside className="hidden lg:block w-1/4 flex-shrink-0">
+                    <aside className="hidden lg:block w-1/4 flex-shrink-0">
                         <LeftInfoPanel currentStep={currentStep} selectedAgent={selectedAgent} os={systemStatus.os} />
                     </aside>
 
                     {/* Main Content */}
                     <div className="flex-grow bg-white rounded-xl shadow-sm border border-slate-200 overflow-y-auto">
                         <div className="p-6 sm:p-8 h-full">
-                           {renderStep()}
+                            <ErrorBoundary>
+                                {renderStep()}
+                            </ErrorBoundary>
                         </div>
                     </div>
 

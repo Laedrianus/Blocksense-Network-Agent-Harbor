@@ -1,4 +1,4 @@
 {
-  "apiKey": "",
+  "apiKey": "Something went wrong The application encountered an error while rendering this step.  Ayrıntılar ReferenceError: isComplete is not defined      at CreateTaskStep (http://localhost:5173/components/CreateTaskStep.tsx:21:27)     at ErrorBoundary (http://localhost:5173/components/ErrorBoundary.tsx:5:1)     at div     at div     at div     at main     at div     at App (http://localhost:5173/App.tsx?t=1764412506803:34:41)",
   "openhandsImage": "ghcr.io/all-hands-ai/openhands:latest"
 }

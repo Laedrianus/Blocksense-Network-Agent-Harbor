@@ -19,15 +19,36 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
     const [authPopupOpened, setAuthPopupOpened] = useState(false);
 
 
-    // If the parent apiKey changes (e.g., from a previous session), update the local one.
+    // Load agent-specific API key when component mounts or selectedAgent changes
     useEffect(() => {
-        setLocalApiKey(apiKey);
-    }, [apiKey]);
-    
-    // Reset saved state if key changes
+        const loadAgentKey = async () => {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const apiKeys = config.apiKeys || {};
+                    const agentKey = apiKeys[selectedAgent] || '';
+                    setLocalApiKey(agentKey);
+                    setApiKey(agentKey);
+                    if (agentKey) {
+                        setIsSaved(true);
+                    } else {
+                        setIsSaved(false);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load API key:', error);
+            }
+        };
+        loadAgentKey();
+    }, [selectedAgent, setApiKey]);
+
+    // Reset saved state if key changes manually
     useEffect(() => {
-        setIsSaved(false);
-    }, [localApiKey]);
+        if (localApiKey !== apiKey) {
+            setIsSaved(false);
+        }
+    }, [localApiKey, apiKey]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,14 +65,17 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
             const response = await fetch('/api/api-key', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ apiKey: localApiKey }),
+                body: JSON.stringify({
+                    apiKey: localApiKey,
+                    agent: selectedAgent
+                }),
             });
 
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to save API key.');
             }
-            
+
             setApiKey(localApiKey); // Update parent state
             setIsSaved(true);
 
@@ -62,7 +86,7 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
             setIsSaving(false);
         }
     };
-    
+
     const handleConnectJules = () => {
         // This is the necessary intermediate page that generates the secure GitHub URL with a state token.
         const julesAuthUrl = 'https://jules.google.com/session';
@@ -75,10 +99,25 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
     };
 
     const agentDetails: { [key: string]: { name: string; url: string; logo: React.ReactNode } } = {
+        claude: {
+            name: 'Anthropic (Claude)',
+            url: 'https://console.anthropic.com/settings/keys',
+            logo: <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-xs font-bold">Cl</div>,
+        },
+        gemini: {
+            name: 'Google Gemini',
+            url: 'https://aistudio.google.com/app/apikey',
+            logo: <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-xs font-bold">Ge</div>,
+        },
         codex: {
             name: 'OpenAI',
             url: 'https://platform.openai.com/api-keys',
             logo: <OpenAILogo className="w-6 h-6" />,
+        },
+        cursor: {
+            name: 'Cursor',
+            url: 'https://www.cursor.com/settings',
+            logo: <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-xs font-bold">Cu</div>,
         },
         goose: {
             name: 'GooseAI',
@@ -93,7 +132,7 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
     };
 
     const currentAgent = agentDetails[selectedAgent] || { name: 'the selected service', url: '#', logo: null };
-    
+
     if (selectedAgent === 'jules') {
         return (
             <div className="flex flex-col h-full text-center">
@@ -101,8 +140,8 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
                     <JulesLogo className="w-12 h-12 text-slate-300 mb-4" />
                     {!authPopupOpened ? (
                         <>
-                            <h2 className="text-xl font-bold text-slate-100">Connect to Jules AI</h2>
-                            <p className="text-slate-400 text-sm mt-1 mb-6 max-w-md mx-auto">
+                            <h2 className="text-xl font-bold text-slate-800">Connect to Jules AI</h2>
+                            <p className="text-slate-600 text-sm mt-1 mb-6 max-w-md mx-auto">
                                 Jules AI uses your GitHub account for authentication. Click the button below to open the connection window.
                             </p>
                             <button
@@ -116,18 +155,18 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
                             </button>
                         </>
                     ) : (
-                         <>
+                        <>
                             <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                            <h2 className="text-xl font-bold text-slate-100">Awaiting Connection</h2>
-                            <p className="text-slate-400 text-sm mt-1 mb-6 max-w-md mx-auto">
+                            <h2 className="text-xl font-bold text-slate-800">Awaiting Connection</h2>
+                            <p className="text-slate-600 text-sm mt-1 mb-6 max-w-md mx-auto">
                                 The connection window has been opened. Please complete the sign-in process with GitHub in that window. Once you're done, you can proceed.
                             </p>
                         </>
                     )}
                 </div>
 
-                <div className="flex-shrink-0 mt-6 pt-6 border-t border-slate-600 flex justify-between items-center">
-                    <button onClick={onBack} className="px-6 py-2 text-sm font-semibold text-slate-200 bg-slate-600 rounded-lg shadow-sm hover:bg-slate-500 transition-colors">
+                <div className="flex-shrink-0 mt-6 pt-6 border-t border-slate-200 flex justify-between items-center">
+                    <button onClick={onBack} className="px-6 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg shadow-sm hover:bg-slate-300 transition-colors">
                         Back
                     </button>
                     <button onClick={onComplete} disabled={!authPopupOpened} className="px-6 py-2 text-sm font-semibold text-white bg-cyan-600 rounded-lg shadow-md hover:bg-cyan-500 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors">
@@ -142,17 +181,17 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
     return (
         <div className="flex flex-col h-full">
             <div className="text-center mb-8">
-                <h2 className="text-xl font-bold text-slate-100">Provide API Key</h2>
-                <p className="text-center text-slate-400 text-sm mt-1 max-w-lg mx-auto">
+                <h2 className="text-xl font-bold text-slate-800">Provide API Key</h2>
+                <p className="text-center text-slate-600 text-sm mt-1 max-w-lg mx-auto">
                     To use the <strong>{currentAgent.name}</strong> agent, you need to provide an API key. This key will be stored securely on the server.
                 </p>
             </div>
-            
+
             <div className="flex-grow max-w-md mx-auto w-full">
                 <form onSubmit={handleSave} className="space-y-4">
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                             <label htmlFor="api-key" className="block text-sm font-medium text-slate-300">
+                            <label htmlFor="api-key" className="block text-sm font-medium text-slate-700">
                                 {currentAgent.name} API Key
                             </label>
                             <a href={currentAgent.url} target="_blank" rel="noopener noreferrer" className="text-xs text-cyan-400 hover:underline">
@@ -165,7 +204,7 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
                                 id="api-key"
                                 value={localApiKey}
                                 onChange={(e) => setLocalApiKey(e.target.value)}
-                                className="w-full bg-slate-900 text-slate-200 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                className="w-full bg-white text-slate-900 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                                 placeholder="sk-..."
                                 required
                             />
@@ -205,7 +244,7 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({ apiKey, setApiKey, onComplete, 
                 <button
                     onClick={onBack}
                     disabled={isSaving}
-                    className="px-6 py-2 text-sm font-semibold text-slate-200 bg-slate-600 rounded-lg shadow-sm hover:bg-slate-500 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors"
+                    className="px-6 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg shadow-sm hover:bg-slate-300 disabled:bg-slate-100 disabled:cursor-not-allowed transition-colors"
                 >
                     Back
                 </button>

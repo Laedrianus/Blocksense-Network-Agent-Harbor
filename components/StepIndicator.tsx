@@ -18,7 +18,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, selectedAgen
         { id: Step.SelectAgent, name: 'Select Agent' },
         { id: Step.Setup, name: 'Setup' },
         { id: Step.ApiKey, name: 'API Key' },
-        { id: Step.CreateTask, name: 'Create Task' },
+        { id: Step.CreateTask, name: 'Task' },
+        { id: Step.TaskMonitor, name: 'Dashboard' },
         { id: Step.Summary, name: 'Summary' },
     ];
 
@@ -27,12 +28,12 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, selectedAgen
         if (step.id === Step.ApiKey && selectedAgent === 'copilot') {
             return false;
         }
-    
+
         // Hide Create Task step for agents where the flow ends before that
         if (step.id === Step.CreateTask && ['copilot', 'jules'].includes(selectedAgent)) {
             return false;
         }
-        
+
         return true;
     });
 
@@ -69,7 +70,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, selectedAgen
                                     aria-hidden="true"
                                 />
                             ) : null}
-                            
+
                             <div className="relative flex flex-col items-center text-center">
                                 {/* Marker */}
                                 <div className={`z-10 flex h-5 w-5 items-center justify-center rounded-full transition-colors ${markerClasses}`}>

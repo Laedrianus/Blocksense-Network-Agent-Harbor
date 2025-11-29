@@ -1,5 +1,0 @@
-{
-  "name": "Blocksense Network Agent Harbor GUI Wizard",
-  "description": "A web-based wizard to simplify the setup and management of Agent Harbor and its integrated AI agents like OpenHands. This GUI guides users through system checks, installation, configuration, and task execution without needing CLI knowledge.",
-  "requestFramePermissions": []
-}

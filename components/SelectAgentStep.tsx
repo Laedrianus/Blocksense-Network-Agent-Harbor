@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircleIcon, OpenHandsLogo, OpenAILogo, CopilotLogo, GooseAILogo, JulesLogo } from './IconComponents';
+import { CheckCircleIcon, OpenAILogo, CopilotLogo, GooseAILogo, JulesLogo } from './IconComponents';
 
 interface Agent {
     id: string;
@@ -10,34 +10,34 @@ interface Agent {
 
 const supportedAgents: Agent[] = [
     {
-        id: 'openhands',
-        name: 'OpenHands',
-        description: 'Execute complex, multi-step tasks on your local machine to complete a development request.',
-        type: 'Self-Hosted',
+        id: 'claude',
+        name: 'Claude Code',
+        description: 'Anthropic\'s Claude AI with advanced coding capabilities. Excellent for complex reasoning and code generation.',
+        type: 'API-Based',
+    },
+    {
+        id: 'gemini',
+        name: 'Google Gemini',
+        description: 'Google\'s multimodal AI model with strong coding and reasoning abilities.',
+        type: 'API-Based',
+    },
+    {
+        id: 'codex',
+        name: 'OpenAI Codex',
+        description: "OpenAI's powerful code-generation model. Excellent for snippets and solving programming problems.",
+        type: 'API-Based',
+    },
+    {
+        id: 'cursor',
+        name: 'Cursor',
+        description: 'AI-first code editor with powerful code generation and editing capabilities.',
+        type: 'IDE Extension',
     },
     {
         id: 'copilot',
         name: 'GitHub Copilot',
         description: 'The well-known AI pair programmer from GitHub that integrates directly into your code editor.',
         type: 'IDE Extension'
-    },
-    {
-        id: 'codex',
-        name: 'Codex',
-        description: "OpenAI's powerful code-generation model. Excellent for snippets and solving programming problems.",
-        type: 'API-Based',
-    },
-    {
-        id: 'jules',
-        name: 'Jules',
-        description: 'An AI pair programming assistant designed to help with a wide variety of development tasks.',
-        type: 'API-Based',
-    },
-    {
-        id: 'goose',
-        name: 'GooseAI',
-        description: 'An AI-powered development tool focused on providing efficient and affordable language model access.',
-        type: 'API-Based',
     },
 ];
 
@@ -63,10 +63,14 @@ const AgentBadge: React.FC<{ type: Agent['type'] }> = ({ type }) => {
 
 const AgentLogo: React.FC<{ agentId: string, className?: string }> = ({ agentId, className }) => {
     switch (agentId) {
-        case 'openhands':
-            return <OpenHandsLogo className={className} />;
+        case 'claude':
+            return <OpenAILogo className={className} />; // Using OpenAI logo as placeholder
+        case 'gemini':
+            return <OpenAILogo className={className} />; // Using OpenAI logo as placeholder
         case 'codex':
             return <OpenAILogo className={className} />;
+        case 'cursor':
+            return <CopilotLogo className={className} />; // Using Copilot logo as placeholder
         case 'copilot':
             return <CopilotLogo className={className} />;
         case 'goose':
@@ -78,74 +82,85 @@ const AgentLogo: React.FC<{ agentId: string, className?: string }> = ({ agentId,
     }
 };
 
-const SelectAgentStep: React.FC<SelectAgentStepProps> = ({ onSelect, onBack, socket }) => {
-    const [selectedId, setSelectedId] = useState<string | null>('openhands');
-    const [prefetching, setPrefetching] = useState(false);
-    const [prefetchLog, setPrefetchLog] = useState<string>('');
+export default function SelectAgentStep({ onSelect, onBack, selectedAgent }: SelectAgentStepProps) {
+    const [selectedId, setSelectedId] = useState<string>(selectedAgent || '');
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSelectAgent = (agentId: string) => {
+        setSelectedId(agentId);
+        setError(null);
+    };
+
+    const handleContinue = () => {
+        if (!selectedId) {
+            setError('Please select an AI agent to continue.');
+            return;
+        }
+        onSelect(selectedId);
+    };
 
     return (
         <div className="flex flex-col h-full">
-             <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-slate-100">Select an Agent</h2>
-                <p className="text-center text-slate-400 text-sm mt-1">Choose the AI agent you want to work with.</p>
+            <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-slate-800">Select an Agent</h2>
+                <p className="text-center text-slate-600 text-sm mt-1">Choose the AI agent you want to work with.</p>
             </div>
-            {selectedId === 'openhands' && (
-                <div className="mt-4 p-4 bg-slate-800 border border-slate-700 rounded-lg">
-                    <p className="text-sm text-slate-300 font-medium">OpenHands requires a Docker image.</p>
-                    <p className="text-xs text-slate-400 mt-1">You can pre-download it now to avoid delays during task run.</p>
-                    <div className="mt-3 flex items-center gap-3">
-                        <button
-                          type="button"
-                          disabled={prefetching}
-                          onClick={() => { setPrefetching(true); setPrefetchLog(''); socket.emit('agent:openhands:prefetch'); socket.once('setup:log', (log: any) => { setPrefetchLog((prev) => (prev ? prev + '\n' : '') + (log?.message || '')); setPrefetching(false); }); }}
-                          className="px-3 py-1.5 text-xs font-semibold text-white bg-cyan-600 rounded hover:bg-cyan-500 disabled:bg-slate-500"
-                        >
-                          {prefetching ? 'Prefetching...' : 'Prefetch Image'}
-                        </button>
-                        <span className="text-xs text-slate-400">Uses image from server/config.json</span>
-                    </div>
-                    {prefetchLog && <pre className="mt-2 text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-auto">{prefetchLog}</pre>}
+            {selectedId === 'claude' && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                    <p className="text-sm text-blue-800 font-medium">Claude Code requires an Anthropic API key.</p>
+                    <p className="text-xs text-blue-600 mt-1">You'll configure this in the next step.</p>
                 </div>
             )}
             <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 content-start">
                 {supportedAgents.map((agent) => (
                     <button
                         key={agent.id}
-                        onClick={() => setSelectedId(agent.id)}
-                        className={`group relative w-full p-4 bg-slate-800 rounded-xl border-2 text-left hover:shadow-lg transition-all flex flex-col ${selectedId === agent.id ? 'border-cyan-500 ring-2 ring-cyan-700' : 'border-slate-700 hover:border-slate-600'}`}
+                        onClick={() => handleSelectAgent(agent.id)}
+                        className={`group relative w-full p-4 bg-white rounded-xl border-2 text-left hover:shadow-lg transition-all flex flex-col ${selectedId === agent.id ? 'border-cyan-500 ring-2 ring-cyan-100' : 'border-slate-200 hover:border-slate-300'}`}
                     >
                         {selectedId === agent.id && (
-                            <CheckCircleIcon className="absolute -top-2 -right-2 w-6 h-6 text-cyan-400 bg-slate-800 rounded-full" />
+                            <CheckCircleIcon className="absolute -top-2 -right-2 w-6 h-6 text-cyan-500 bg-white rounded-full" />
                         )}
                         <div className="flex justify-between items-start">
-                             <AgentLogo agentId={agent.id} className="w-8 h-8 text-slate-400 group-hover:text-cyan-400 transition-colors" />
-                             <AgentBadge type={agent.type} />
+                            <AgentLogo agentId={agent.id} className="w-8 h-8 text-slate-400 group-hover:text-cyan-600 transition-colors" />
+                            <AgentBadge type={agent.type} />
                         </div>
                         <div className="mt-3 flex flex-col flex-grow">
-                            <h3 className="text-sm font-semibold text-slate-200">{agent.name}</h3>
-                            <p className="text-xs text-slate-400 mt-1 flex-grow">{agent.description}</p>
+                            <h3 className="text-sm font-semibold text-slate-800">{agent.name}</h3>
+                            <p className="text-xs text-slate-500 mt-1 flex-grow">{agent.description}</p>
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="mt-6 pt-6 border-t border-slate-600 flex-shrink-0 flex justify-between items-center">
-                 <button
+            {/* Error Message */}
+            {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-300 rounded-lg">
+                    <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+            )}
+
+            {/* Bottom navigation buttons */}
+            <div className="flex gap-4 mt-6">
+                <button
+                    type="button"
                     onClick={onBack}
-                    className="px-6 py-2 text-sm font-semibold text-slate-200 bg-slate-600 rounded-lg shadow-sm hover:bg-slate-500 transition-colors"
+                    className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 font-medium"
                 >
                     Back
                 </button>
                 <button
-                    onClick={() => { if (selectedId) onSelect(selectedId); }}
+                    type="button"
+                    onClick={handleContinue}
                     disabled={!selectedId}
-                    className="px-6 py-2 text-sm font-semibold text-white bg-cyan-600 rounded-lg shadow-md hover:bg-cyan-500 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors"
+                    className={`flex-1 px-6 py-3 rounded-lg font-medium ${selectedId
+                        ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                        }`}
                 >
-                    Next
+                    Continue
                 </button>
             </div>
         </div>
     );
-};
-
-export default SelectAgentStep;
+}
