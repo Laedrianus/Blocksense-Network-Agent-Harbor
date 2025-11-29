@@ -53,6 +53,7 @@ Thumbs.db
 
 # Agent Harbor repository (cloned by wizard)
 agent-harbor-repo/
+server/agent-harbor-temp/
 
 # TypeScript
 *.tsbuildinfo
